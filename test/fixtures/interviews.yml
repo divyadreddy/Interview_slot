@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  title: MyString
+  participants_email: MyText
+  start_time: 2020-05-18 01:12:14
+  end_time: 2020-05-18 01:12:14
+
+two:
+  title: MyString
+  participants_email: MyText
+  start_time: 2020-05-18 01:12:14
+  end_time: 2020-05-18 01:12:14
