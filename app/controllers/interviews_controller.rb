@@ -24,9 +24,12 @@ class InterviewsController < ApplicationController
   # POST /interviews
   # POST /interviews.json
   def create
-    result = participants_available
+    interviewer_id = params[:interview][:interviewer_id]
+    interviewee_id = params[:interview][:interviewee_id]
+    start_time, end_time = time_conversion(params)
+    result, reason = Interview.participants_available(start_time, end_time, interviewer_id, interviewee_id)
     @interview = Interview.new(interview_params)
-    if(result == 0)
+    if(result == true)
       respond_to do |format|
         if @interview.save
           format.html { redirect_to @interview, notice: 'Interview was successfully created.' }
@@ -36,19 +39,11 @@ class InterviewsController < ApplicationController
           format.json { render json: @interview.errors, status: :unprocessable_entity }
         end
       end
-    elsif result==1 
-      # @errors = ActiveModel::Errors.new(self)
+    elsif result==false
       respond_to do |format|
-        @interview.errors.add(params[:interview][:interviewer_id], message: "Interviewer is not available in this time slot") 
+        @interview.errors.add(message: reason.to_s) 
         format.html {  render :new }
-        format.json { render json: errors, status: :unprocessable_entity }
-      end
-    elsif result==2
-      # @errors = ActiveModel::Errors.new(self)
-      respond_to do |format|
-        @interview.errors.add(params[:interview][:interviewee_id], message: "Interviewee with ID ? is not available in this time slot")
-        format.html {  render :new }
-        format.json { render json: errors, status: :unprocessable_entity }
+        format.json { render json: @interview.errors, status: :unprocessable_entity }
       end
     end
   end
@@ -56,11 +51,24 @@ class InterviewsController < ApplicationController
   # PATCH/PUT /interviews/1
   # PATCH/PUT /interviews/1.json
   def update
-    respond_to do |format|
-      if @interview.update(interview_params)
-        format.html { redirect_to @interview, notice: 'Interview was successfully updated.' }
-        format.json { render :show, status: :ok, location: @interview }
-      else
+    interviewer_id = params[:interview][:interviewer_id]
+    interviewee_id = params[:interview][:interviewee_id]
+    start_time, end_time = time_conversion(params)
+    result, reason = Interview.participants_available(start_time, end_time, interviewer_id, interviewee_id)
+    if(result == true)
+      respond_to do |format|
+        if @interview.update(interview_params)
+          format.html { redirect_to @interview, notice: 'Interview was successfully updated.' }
+          format.json { render :show, status: :ok, location: @interview }
+        else
+          format.html { render :edit }
+          format.json { render json: @interview.errors, status: :unprocessable_entity }
+        end
+      end
+    elsif result==false
+      logger.info reason
+      respond_to do |format|
+        @interview.errors.add(message: reason.to_s) 
         format.html { render :edit }
         format.json { render json: @interview.errors, status: :unprocessable_entity }
       end
@@ -88,8 +96,7 @@ class InterviewsController < ApplicationController
       params.require(:interview).permit(:title, :start_time, :end_time, :interviewer_id, :interviewee_id) 
     end
 
-    def participants_available
-      logger.info((params[:interview]["title"]))
+    def time_conversion(params)
       start = DateTime.new(params[:interview]["start_time(1i)"].to_i, 
       params[:interview]["start_time(2i)"].to_i,
       params[:interview]["start_time(3i)"].to_i,
@@ -100,14 +107,6 @@ class InterviewsController < ApplicationController
       params[:interview]["end_time(3i)"].to_i,
       params[:interview]["end_time(4i)"].to_i,
       params[:interview]["end_time(5i)"].to_i)
-      # logger.info("here" + params[:interview][:interviewer_id] + params[:interview]["start_time(1i)"])#.strftime('%a %b %d %H:%M:%S %Z %Y') )# + params[:interview][:end_time])
-      time_clash = Interview.where("(end_time BETWEEN ? AND ?) or (start_time BETWEEN ? AND ?) or ((end_time > ?) and (start_time < ?))", start, close, start, close, close, start)
-      if time_clash.where("interviewer_id = ?", params[:interview][:interviewer_id]).exists?
-        return 1
-      end
-      if time_clash.where("interviewee_id = ?", params[:interview][:interviewee_id]).exists?
-        return 2
-      end
-      return 0
+      return start, close
     end
 end
