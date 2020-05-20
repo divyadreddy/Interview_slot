@@ -3,6 +3,7 @@ class SendEmailsJob < ApplicationJob
 
   def perform(interview)
     # Do something later
-    InterviewMailer.interview_scheduled(interview).deliver
+    # InterviewMailer.interview_scheduled(interview: interview).deliver_now
   end
+
 end

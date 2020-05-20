@@ -1,5 +1,5 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: "divya.donapati@students.iiit.ac.in"
+  default from: "tempemaildivya@gmail.com"
 
   layout 'mailer'
 end

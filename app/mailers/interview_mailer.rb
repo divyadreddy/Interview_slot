@@ -1,18 +1,23 @@
 class InterviewMailer < ApplicationMailer
-    # default from: 'divya.donpati@gmail.com'
 
-  def interview_scheduled
-    @interview = params[:interview]
-    logger.info "interview scheduled"
-    # delivery_options = { user_name: params[:company].smtp_user,
-    #     password: params[:company].smtp_password,
-    #     address: params[:company].smtp_host }
+  def interview_scheduled(interview)
+    @interview = interview
+    mail(to: [Interviewee.find(@interview.interviewee_id).email, Interviewer.find(@interview.interviewer_id).email], subject: @interview.title + " Interview Schedule" )
+  end
 
+  def interview_schedule_updated(interview)
+    @interview = interview
+    mail(to: [Interviewee.find(@interview.interviewee_id).email, Interviewer.find(@interview.interviewer_id).email], subject: @interview.title + " Interview Schedule Updated" )
+  end
 
-    logger.info @interview
-    logger.info Interviewee.find(@interview.interviewee_id).email
-    
-    mail(to: "divyadonpati@gmail.com", subject: "You got a new order!")
-    # mail(:to => Interviewee.find(@interview.interviewee_id).email, :subject => "Interview Scheduled")
+  def interview_schedule_deleted(interview)
+    @interview = interview
+    mail(to: [Interviewee.find(@interview.interviewee_id).email, Interviewer.find(@interview.interviewer_id).email], subject: @interview.title + " Interview Cancelled" )
+  end
+
+  def interview_scheduled_reminder(interview)
+    @interview = interview
+    mail(to: [Interviewee.find(@interview.interviewee_id).email, Interviewer.find(@interview.interviewer_id).email], subject: "Reminder: "  + @interview.title + " Interview Scheduled in 30 minutes" )
   end
 end
+ 
