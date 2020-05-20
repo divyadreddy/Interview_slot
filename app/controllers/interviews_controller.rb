@@ -41,14 +41,14 @@ class InterviewsController < ApplicationController
       respond_to do |format|
         @interview.errors.add(params[:interview][:interviewer_id], message: "Interviewer is not available in this time slot") 
         format.html {  render :new }
-        format.json { render json: errors, status: :unprocessable_entity }
+        format.json { render json: @interview.errors, status: :unprocessable_entity }
       end
     elsif result==2
       # @errors = ActiveModel::Errors.new(self)
       respond_to do |format|
         @interview.errors.add(params[:interview][:interviewee_id], message: "Interviewee with ID ? is not available in this time slot")
         format.html {  render :new }
-        format.json { render json: errors, status: :unprocessable_entity }
+        format.json { render json: @interview.errors, status: :unprocessable_entity }
       end
     end
   end
@@ -56,11 +56,30 @@ class InterviewsController < ApplicationController
   # PATCH/PUT /interviews/1
   # PATCH/PUT /interviews/1.json
   def update
-    respond_to do |format|
-      if @interview.update(interview_params)
-        format.html { redirect_to @interview, notice: 'Interview was successfully updated.' }
-        format.json { render :show, status: :ok, location: @interview }
-      else
+    result = participants_available
+    logger.info result
+    SendEmailsJob.perform_later @interview
+    if(result == 0)
+      respond_to do |format|
+        if @interview.update(interview_params)
+          format.html { redirect_to @interview, notice: 'Interview was successfully updated.' }
+          format.json { render :show, status: :ok, location: @interview }
+        else
+          format.html { render :edit }
+          format.json { render json: @interview.errors, status: :unprocessable_entity }
+        end
+      end
+    elsif result==1 
+      # @errors = ActiveModel::Errors.new(self)
+      respond_to do |format|
+        @interview.errors.add(params[:interview][:interviewer_id], message: "Interviewer is not available in this time slot") 
+        format.html { render :edit }
+          format.json { render json: @interview.errors, status: :unprocessable_entity }
+      end
+    elsif result==2
+      # @errors = ActiveModel::Errors.new(self)
+      respond_to do |format|
+        @interview.errors.add(params[:interview][:interviewee_id], message: "Interviewee with ID ? is not available in this time slot")
         format.html { render :edit }
         format.json { render json: @interview.errors, status: :unprocessable_entity }
       end
